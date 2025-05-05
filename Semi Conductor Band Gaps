@@ -1,0 +1,35 @@
+import os
+import pandas as pd
+import matplotlib.pyplot as plt
+from mp_api.client import MPRester
+
+os.environ["MP_API_KEY"] = "API KEY"
+
+
+chemical_system = "Si-O" 
+
+with MPRester() as mpr:
+    results = mpr.materials.summary.search(
+        chemsys=chemical_system,
+        band_gap=(0.1, 4.0),
+        fields=["material_id", "formula_pretty", "band_gap"]
+    )
+
+
+df = pd.DataFrame([{
+    "Material ID": doc.material_id,
+    "Formula": doc.formula_pretty,
+    "Band Gap (eV)": doc.band_gap
+} for doc in results])
+
+
+print(df.head())
+
+
+plt.figure(figsize=(8, 5))
+plt.hist(df["Band Gap (eV)"], bins=15, edgecolor='black')
+plt.title(f"Semiconductors in {chemical_system} System")
+plt.xlabel("Band Gap (eV)")
+plt.ylabel("Frequency")
+plt.grid(True)
+plt.show()
