@@ -1,0 +1,47 @@
+import os
+from mp_api.client import MPRester
+import pandas as pd
+import matplotlib.pyplot as plt
+
+
+os.environ["MP_API_KEY"] = "API KEY"
+
+
+metals = ["Ti", "Al", "Ga", "Zn", "Zr", "Hf", "Nb", "Ta", "In", "Sc", "Y", "Cr", "V", "Fe", "Mo", "W"]
+
+oxide_gaps = []
+nitride_gaps = []
+
+
+with MPRester() as mpr:
+    for metal in metals:
+        # Oxide
+        oxide_results = mpr.materials.summary.search(
+            formula=f"{metal}O",
+            fields=["formula_pretty", "band_gap"]
+        )
+        oxide_bandgaps = [doc.band_gap for doc in oxide_results if doc.band_gap is not None]
+        oxide_gaps.append(sum(oxide_bandgaps)/len(oxide_bandgaps) if oxide_bandgaps else None)
+
+        
+        nitride_results = mpr.materials.summary.search(
+            formula=f"{metal}N",
+            fields=["formula_pretty", "band_gap"]
+        )
+        nitride_bandgaps = [doc.band_gap for doc in nitride_results if doc.band_gap is not None]
+        nitride_gaps.append(sum(nitride_bandgaps)/len(nitride_bandgaps) if nitride_bandgaps else None)
+
+
+df = pd.DataFrame({
+    "Metal": metals,
+    "Oxide Band Gap (eV)": oxide_gaps,
+    "Nitride Band Gap (eV)": nitride_gaps
+})
+
+
+df.set_index("Metal").plot(kind="bar", figsize=(12, 6))
+plt.ylabel("Average Band Gap (eV)")
+plt.title("Average Band Gaps: Oxides vs Nitrides")
+plt.xticks(rotation=45)
+plt.tight_layout()
+plt.show()
