@@ -1,0 +1,42 @@
+import os
+from mp_api.client import MPRester
+import pandas as pd
+import matplotlib.pyplot as plt
+
+
+os.environ["MP_API_KEY"] = "API KEY" 
+
+
+rocksalt_spacegroup = 225
+
+
+with MPRester() as mpr:
+    docs = mpr.materials.summary.search(
+        spacegroup_number=rocksalt_spacegroup,
+        fields=["formula_pretty", "symmetry", "band_gap", "density"]
+    )
+
+
+data = []
+for doc in docs:
+    if doc.band_gap is not None:
+        data.append({
+            "Formula": doc.formula_pretty,
+            "Space Group": doc.symmetry.symbol if doc.symmetry else None,
+            "Band Gap (eV)": doc.band_gap,
+            "Density (g/cm³)": doc.density
+        })
+
+df = pd.DataFrame(data)
+
+
+print(df.head())
+
+
+plt.figure(figsize=(8, 5))
+plt.hist(df["Band Gap (eV)"], bins=20, edgecolor='black')
+plt.xlabel("Band Gap (eV)")
+plt.ylabel("Count")
+plt.title("Band Gap Distribution for Rocksalt Materials")
+plt.grid(True)
+plt.show()
